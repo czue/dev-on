@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::project::Project;
+use std::fs;
 use std::path::PathBuf;
 
 pub fn execute(alias: &str, path: &str, init_commands: Vec<String>) -> Result<(), String> {
@@ -10,9 +11,13 @@ pub fn execute(alias: &str, path: &str, init_commands: Vec<String>) -> Result<()
     }
 
     let path_buf = PathBuf::from(path);
-    let project = Project::new(path_buf, init_commands);
+    let mut project = Project::new(path_buf, init_commands);
 
     project.validate()?;
+
+    // Store an absolute path so `devon` works from any directory.
+    project.path = fs::canonicalize(&project.path)
+        .map_err(|e| format!("Failed to resolve project path: {}", e))?;
 
     config.add_project(alias.to_string(), project);
     config.save()?;

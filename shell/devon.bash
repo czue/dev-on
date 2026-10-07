@@ -1,9 +1,12 @@
 #!/bin/bash
-# devon - Bash wrapper for dev-on project switcher
-# Source this file in your .bashrc to enable the devon command
+# devon - Shell wrapper for dev-on project switcher
+# Source this file in your .bashrc or .zshrc to enable the devon command.
+# Written to run under both bash (including macOS's bash 3.2) and zsh.
 
 # Main devon function - wrapper around dev-on binary
 devon() {
+  local result project_path rest cmd
+
   if ! command -v dev-on &> /dev/null; then
     echo "Error: dev-on not installed"
     echo "Install with: cargo install --path /path/to/dev-on"
@@ -17,30 +20,39 @@ devon() {
     return 1
   fi
 
-  # Get project info from rust binary
-  local result=$(dev-on get "$1" 2>&1)
+  # Get project info from rust binary. Assign separately from the
+  # declaration so $? is dev-on's exit status, not local's.
+  result=$(dev-on get "$1" 2>&1)
   if [ $? -ne 0 ]; then
     echo "$result"
     return 1
   fi
 
   # Parse result: path|init_cmd1|init_cmd2|...
-  IFS='|' read -ra PARTS <<< "$result"
-  local project_path="${PARTS[0]}"
+  # Uses plain parameter expansion rather than arrays, which differ
+  # between bash and zsh.
+  project_path="${result%%|*}"
+  rest=""
+  case "$result" in
+    *"|"*) rest="${result#*|}" ;;
+  esac
 
   # Change directory
   cd "$project_path" || return 1
   echo "Working on: $1 ($project_path)"
 
-  # Run init commands
-  for i in "${!PARTS[@]}"; do
-    if [ $i -gt 0 ]; then
-      eval "${PARTS[$i]}"
-    fi
-  done
-
-  # Default: auto-activate .venv if present and no init commands
-  if [ ${#PARTS[@]} -eq 1 ] && [ -f ".venv/bin/activate" ]; then
+  if [ -n "$rest" ]; then
+    # Run init commands
+    while [ -n "$rest" ]; do
+      cmd="${rest%%|*}"
+      case "$rest" in
+        *"|"*) rest="${rest#*|}" ;;
+        *) rest="" ;;
+      esac
+      eval "$cmd"
+    done
+  elif [ -f ".venv/bin/activate" ]; then
+    # Default: auto-activate .venv if present and no init commands
     source .venv/bin/activate
     echo "Activated .venv"
   fi
@@ -62,13 +74,25 @@ devon-edit() {
 }
 
 # Tab completion
-_devon_complete() {
-  if ! command -v dev-on &> /dev/null; then
-    return 0
+if [ -n "$ZSH_VERSION" ]; then
+  _devon_complete() {
+    command -v dev-on &> /dev/null || return 0
+    compadd -- ${(f)"$(dev-on list 2>/dev/null)"}
+  }
+  # compdef only exists once compinit has run (most zsh setups, e.g.
+  # oh-my-zsh, do this). Skip completion rather than error otherwise.
+  if (( $+functions[compdef] )); then
+    compdef _devon_complete devon
   fi
+else
+  _devon_complete() {
+    if ! command -v dev-on &> /dev/null; then
+      return 0
+    fi
 
-  local projects=$(dev-on list 2>/dev/null)
-  COMPREPLY=($(compgen -W "$projects" -- "${COMP_WORDS[1]}"))
-}
+    local projects=$(dev-on list 2>/dev/null)
+    COMPREPLY=($(compgen -W "$projects" -- "${COMP_WORDS[1]}"))
+  }
 
-complete -F _devon_complete devon
+  complete -F _devon_complete devon
+fi
