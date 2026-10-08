@@ -29,10 +29,11 @@ impl Project {
         Ok(())
     }
 
+    /// Path and init commands, one per line, for the shell wrapper to parse.
     pub fn format_output(&self) -> String {
         let mut output = self.path.display().to_string();
         for cmd in &self.init {
-            output.push('|');
+            output.push('\n');
             output.push_str(cmd);
         }
         output

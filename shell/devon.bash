@@ -5,7 +5,7 @@
 
 # Main devon function - wrapper around dev-on binary
 devon() {
-  local result project_path rest cmd
+  local result project_path rest cmd nl=$'\n'
 
   if ! command -v dev-on &> /dev/null; then
     echo "Error: dev-on not installed"
@@ -28,13 +28,13 @@ devon() {
     return 1
   fi
 
-  # Parse result: path|init_cmd1|init_cmd2|...
+  # Parse result: the path, then one init command per line.
   # Uses plain parameter expansion rather than arrays, which differ
   # between bash and zsh.
-  project_path="${result%%|*}"
+  project_path="${result%%"$nl"*}"
   rest=""
   case "$result" in
-    *"|"*) rest="${result#*|}" ;;
+    *"$nl"*) rest="${result#*"$nl"}" ;;
   esac
 
   # Change directory
@@ -44,9 +44,9 @@ devon() {
   if [ -n "$rest" ]; then
     # Run init commands
     while [ -n "$rest" ]; do
-      cmd="${rest%%|*}"
+      cmd="${rest%%"$nl"*}"
       case "$rest" in
-        *"|"*) rest="${rest#*|}" ;;
+        *"$nl"*) rest="${rest#*"$nl"}" ;;
         *) rest="" ;;
       esac
       eval "$cmd"
