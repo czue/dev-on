@@ -9,7 +9,7 @@ A standalone project switcher for development environments, inspired by virtuale
 - Custom init commands per project
 - Tab completion for project names
 - Simple JSON configuration
-- Cross-platform (Linux, macOS, Windows)
+- Works in bash and zsh (Linux, macOS)
 
 ## Installation
 
@@ -31,13 +31,15 @@ cargo install dev-on
 
 The `dev-on` binary handles configuration management and project lookup.
 
-### 2. Source the bash wrapper
+### 2. Source the shell wrapper
 
-Add to your `.bashrc` or `.bash_profile`:
+The wrapper works in both bash and zsh. Add to your `.bashrc`, `.bash_profile`, or `.zshrc`:
 
 ```bash
-source /path/to/dev-on/shell/devon.bash
+source /path/to/dev-on/shell/devon.sh
 ```
+
+In zsh, tab completion is registered only if `compinit` has already run (oh-my-zsh and most frameworks do this), so source the wrapper after that.
 
 Or copy the wrapper to your dotfiles and source it from there.
 
