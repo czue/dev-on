@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # devon - Shell wrapper for dev-on project switcher
 # Source this file in your .bashrc or .zshrc to enable the devon command.
 # Written to run under both bash (including macOS's bash 3.2) and zsh.

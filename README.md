@@ -36,7 +36,7 @@ The `dev-on` binary handles configuration management and project lookup.
 The wrapper works in both bash and zsh. Add to your `.bashrc`, `.bash_profile`, or `.zshrc`:
 
 ```bash
-source /path/to/dev-on/shell/devon.bash
+source /path/to/dev-on/shell/devon.sh
 ```
 
 In zsh, tab completion is registered only if `compinit` has already run (oh-my-zsh and most frameworks do this), so source the wrapper after that.
